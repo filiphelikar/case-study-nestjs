@@ -19,7 +19,7 @@ export class CustomersController {
   @ApiResponse({ status: 400, description: 'Bad Request.' })
   public create(
     @Body() createCustomerDto: UpdateCustomerDto,
-  ): CreateCustomerDto {
+  ): Promise<CreateCustomerDto> {
     return this.customersService.create(createCustomerDto);
   }
 
@@ -30,7 +30,7 @@ export class CustomersController {
     description: 'List of customers',
     type: [CreateCustomerDto],
   })
-  public findAll(): CreateCustomerDto[] {
+  public findAll(): Promise<CreateCustomerDto[]> {
     return this.customersService.findAll();
   }
 
@@ -42,8 +42,8 @@ export class CustomersController {
     type: CreateCustomerDto,
   })
   @ApiResponse({ status: 404, description: 'Customer not found.' })
-  public findOne(@Param('id') id: number): CreateCustomerDto {
-    return this.customersService.findOne(+id);
+  public findOne(@Param('id') id: number): Promise<CreateCustomerDto> {
+    return this.customersService.findOne(id);
   }
 
   @Patch(':id')
@@ -54,10 +54,14 @@ export class CustomersController {
     type: CreateCustomerDto,
   })
   @ApiResponse({ status: 404, description: 'Customer not found.' })
+  @ApiResponse({
+    status: 400,
+    description: 'At least one field (name, age, city) must be provided.',
+  })
   public update(
     @Param('id') id: number,
     @Body() updateCustomerDto: UpdateCustomerDto,
-  ): CreateCustomerDto {
-    return this.customersService.update(+id, updateCustomerDto);
+  ): Promise<CreateCustomerDto> {
+    return this.customersService.update(id, updateCustomerDto);
   }
 }

@@ -5,64 +5,64 @@ import {
 } from '@nestjs/common';
 import { CreateCustomerDto } from './dto/create-customer.dto';
 import { UpdateCustomerDto } from './dto/update-customer.dto';
-import { faker } from '@faker-js/faker';
-
-const fakeData: CreateCustomerDto[] = Array.from({ length: 20 }, () => {
-  return {
-    id: faker.number.int(),
-    name: faker.person.fullName(),
-    city: faker.location.city(),
-    age:
-      new Date().getFullYear() -
-      faker.date.birthdate({ min: 12, max: 45, mode: 'age' }).getFullYear(),
-  };
-});
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Customer } from './entities/customer.entity';
 
 @Injectable()
 export class CustomersService {
-  public create(createDatumDto: UpdateCustomerDto): CreateCustomerDto {
+  constructor(
+    @InjectRepository(Customer)
+    private customerRepository: Repository<Customer>,
+  ) {}
+
+  public async create(
+    createDatumDto: UpdateCustomerDto,
+  ): Promise<CreateCustomerDto> {
     if (createDatumDto.age && createDatumDto.city && createDatumDto.name) {
-      const newData: CreateCustomerDto = {
-        id: faker.number.int(),
+      const newData: UpdateCustomerDto = {
         name: createDatumDto.name,
         age: createDatumDto.age,
         city: createDatumDto.city,
       };
 
-      fakeData.push(newData);
-      return newData;
+      await this.customerRepository.create(newData);
+      return this.customerRepository.save(newData);
     }
 
     throw new BadRequestException('Bad Request');
   }
 
-  public findAll() {
-    return fakeData;
+  public findAll(): Promise<CreateCustomerDto[]> {
+    return this.customerRepository.find();
   }
 
-  public findOne(id: number): CreateCustomerDto {
-    const findCustomer: CreateCustomerDto = fakeData.find(
-      (customer) => customer.id == id,
-    );
+  public async findOne(id: number): Promise<CreateCustomerDto> {
+    const findCustomer: CreateCustomerDto =
+      await this.customerRepository.findOneBy({ id });
 
     if (!findCustomer) throw new NotFoundException('Customer not found');
 
     return findCustomer;
   }
 
-  public update(
+  public async update(
     id: number,
     updateDatumDto: Partial<UpdateCustomerDto>,
-  ): CreateCustomerDto {
-    const index: number = fakeData.findIndex((customer) => customer.id == id);
+  ): Promise<CreateCustomerDto> {
+    if (!updateDatumDto.name && !updateDatumDto.age && !updateDatumDto.city)
+      throw new BadRequestException(
+        'At least one field (name, age, city) must be provided.',
+      );
 
-    if (index == -1) throw new NotFoundException('Customer not found');
-
-    fakeData[index] = {
-      ...fakeData[index],
-      ...updateDatumDto,
+    const newData: Partial<UpdateCustomerDto> = {
+      name: updateDatumDto.name,
+      age: updateDatumDto.age,
+      city: updateDatumDto.city,
     };
 
-    return fakeData[index];
+    await this.customerRepository.update({ id }, { ...newData });
+
+    return this.findOne(id);
   }
 }

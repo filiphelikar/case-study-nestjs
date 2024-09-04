@@ -1,78 +1,149 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { CustomersService } from './customers.service';
+import { Repository } from 'typeorm';
+import { getRepositoryToken } from '@nestjs/typeorm';
+import { Customer } from './entities/customer.entity';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { CreateCustomerDto } from './dto/create-customer.dto';
 import { UpdateCustomerDto } from './dto/update-customer.dto';
 
-describe('DataService', () => {
+const mockCustomerRepository = {
+  create: jest.fn(),
+  save: jest.fn(),
+  find: jest.fn(),
+  findOneBy: jest.fn(),
+  update: jest.fn(),
+};
+
+describe('CustomersService', () => {
   let service: CustomersService;
+  let repository: Repository<Customer>;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [CustomersService],
+      providers: [
+        CustomersService,
+        {
+          provide: getRepositoryToken(Customer),
+          useValue: mockCustomerRepository,
+        },
+      ],
     }).compile();
 
     service = module.get<CustomersService>(CustomersService);
+    repository = module.get<Repository<Customer>>(getRepositoryToken(Customer));
   });
 
-  it('should be defined', () => {
-    expect(service).toBeDefined();
+  afterEach(() => {
+    jest.clearAllMocks();
   });
 
   describe('create', () => {
-    it('should create and return a new datum', () => {
-      const createDatumDto: UpdateCustomerDto = {
+    it('should create and return a new customer', async () => {
+      const createDto: UpdateCustomerDto = {
         name: 'John Doe',
-        city: 'New York',
         age: 30,
+        city: 'New York',
       };
-      const result = service.create(createDatumDto);
-      expect(result).toEqual(expect.objectContaining(createDatumDto));
+
+      const createdCustomer = {
+        ...createDto,
+      };
+
+      mockCustomerRepository.create.mockReturnValue(createdCustomer);
+      mockCustomerRepository.save.mockResolvedValue(createdCustomer);
+
+      const result = await service.create(createDto);
+
+      expect(mockCustomerRepository.create).toHaveBeenCalledWith(createDto);
+      expect(mockCustomerRepository.save).toHaveBeenCalledWith(createdCustomer);
+      expect(result).toEqual(createdCustomer);
     });
 
-    it('should throw BadRequestException if required fields are missing', () => {
-      const createDatumDto: Partial<UpdateCustomerDto> = {
+    it('should throw BadRequestException if required fields are missing', async () => {
+      const createDto: UpdateCustomerDto = {
         name: 'John Doe',
+        age: null,
         city: 'New York',
       };
 
-      expect(() => service.create(createDatumDto as UpdateCustomerDto)).toThrow(
+      await expect(service.create(createDto)).rejects.toThrow(
         BadRequestException,
       );
     });
   });
 
   describe('findAll', () => {
-    it('should return an array of data', () => {
-      const result = service.findAll();
-      expect(Array.isArray(result)).toBe(true);
-      expect(result.length).toBeGreaterThan(0);
+    it('should return all customers', async () => {
+      const customers: CreateCustomerDto[] = [
+        { id: 1, name: 'John Doe', age: 30, city: 'New York' },
+        { id: 2, name: 'Jane Doe', age: 25, city: 'Los Angeles' },
+      ];
+
+      mockCustomerRepository.find.mockResolvedValue(customers);
+
+      const result = await service.findAll();
+      expect(mockCustomerRepository.find).toHaveBeenCalled();
+      expect(result).toEqual(customers);
     });
   });
 
   describe('findOne', () => {
-    it('should return a datum with a valid id', () => {
-      const existingDatum = service.findAll()[0];
-      const result = service.findOne(existingDatum.id);
-      expect(result).toEqual(existingDatum);
+    it('should return a customer by ID', async () => {
+      const customer: CreateCustomerDto = {
+        id: 1,
+        name: 'John Doe',
+        age: 30,
+        city: 'New York',
+      };
+
+      mockCustomerRepository.findOneBy.mockResolvedValue(customer);
+
+      const result = await service.findOne(1);
+
+      expect(mockCustomerRepository.findOneBy).toHaveBeenCalledWith({ id: 1 });
+      expect(result).toEqual(customer);
     });
 
-    it('should throw NotFoundException if datum not found', () => {
-      expect(() => service.findOne(123456)).toThrow(NotFoundException);
+    it('should throw NotFoundException if customer not found', async () => {
+      mockCustomerRepository.findOneBy.mockResolvedValue(null);
+
+      await expect(service.findOne(1)).rejects.toThrow(NotFoundException);
     });
   });
 
   describe('update', () => {
-    it('should update and return the datum if id is valid', () => {
-      const existingDatum = service.findAll()[0];
-      const updateDatumDto: Partial<UpdateCustomerDto> = {
-        name: 'Jane Doe',
+    it('should update and return the updated customer', async () => {
+      const updateDto: Partial<UpdateCustomerDto> = {
+        name: 'Updated Name',
       };
-      const result = service.update(existingDatum.id, updateDatumDto);
-      expect(result.name).toBe(updateDatumDto.name);
+
+      const updatedCustomer: CreateCustomerDto = {
+        id: 1,
+        name: 'Updated Name',
+        age: 30,
+        city: 'New York',
+      };
+
+      mockCustomerRepository.update.mockResolvedValue(null);
+      mockCustomerRepository.findOneBy.mockResolvedValue(updatedCustomer);
+
+      const result = await service.update(1, updateDto);
+
+      expect(mockCustomerRepository.update).toHaveBeenCalledWith(
+        { id: 1 },
+        { ...updateDto },
+      );
+      expect(mockCustomerRepository.findOneBy).toHaveBeenCalledWith({ id: 1 });
+      expect(result).toEqual(updatedCustomer);
     });
 
-    it('should throw NotFoundException if datum not found', () => {
-      expect(() => service.update(123456, {})).toThrow(NotFoundException);
+    it('should throw BadRequestException if no fields are provided for update', async () => {
+      const updateDto: Partial<UpdateCustomerDto> = {};
+
+      await expect(service.update(1, updateDto)).rejects.toThrow(
+        BadRequestException,
+      );
     });
   });
 });
