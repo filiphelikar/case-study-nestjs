@@ -7,6 +7,7 @@ describe('CustomersController', () => {
   let controller: CustomersController;
   let service: CustomersService;
 
+  // Sample customer data for testing
   const mockCustomer: UpdateCustomerDto = {
     name: 'John Doe',
     age: 30,
@@ -19,6 +20,7 @@ describe('CustomersController', () => {
   };
   const customersArray: UpdateCustomerDto[] = [mockCustomer];
 
+  // Mock implementation of the CustomersService
   const mockCustomersService = {
     create: jest.fn().mockResolvedValue(mockCustomer),
     findAll: jest.fn().mockResolvedValue(customersArray),
@@ -26,6 +28,7 @@ describe('CustomersController', () => {
     update: jest.fn().mockResolvedValue(updatedCustomer),
   };
 
+  // Setup before each test
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [CustomersController],
@@ -41,10 +44,12 @@ describe('CustomersController', () => {
     service = module.get<CustomersService>(CustomersService);
   });
 
+  // Test if controller is defined
   it('should be defined', () => {
     expect(controller).toBeDefined();
   });
 
+  // Tests for the 'create' method
   describe('create', () => {
     it('should create a new customer', async () => {
       const createDto: UpdateCustomerDto = {
@@ -57,6 +62,7 @@ describe('CustomersController', () => {
     });
   });
 
+  // Tests for the 'findAll' method
   describe('findAll', () => {
     it('should return an array of customers', async () => {
       await expect(controller.findAll()).resolves.toEqual(customersArray);
@@ -64,6 +70,7 @@ describe('CustomersController', () => {
     });
   });
 
+  // Tests for the 'findOne' method
   describe('findOne', () => {
     it('should return a single customer', async () => {
       const id = 1;
@@ -72,6 +79,7 @@ describe('CustomersController', () => {
     });
   });
 
+  // Tests for the 'update' method
   describe('update', () => {
     it('should update and return the updated customer', async () => {
       const id = 1;

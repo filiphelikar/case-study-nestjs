@@ -9,6 +9,7 @@ import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 export class CustomersController {
   constructor(private readonly customersService: CustomersService) {}
 
+  // Create a new customer
   @Post()
   @ApiOperation({ summary: 'Create a new customer' })
   @ApiResponse({
@@ -23,6 +24,7 @@ export class CustomersController {
     return this.customersService.create(createCustomerDto);
   }
 
+  // Get all customers
   @Get()
   @ApiOperation({ summary: 'Get all customers' })
   @ApiResponse({
@@ -34,6 +36,7 @@ export class CustomersController {
     return this.customersService.findAll();
   }
 
+  // Get a customer by ID
   @Get(':id')
   @ApiOperation({ summary: 'Get a customer by ID' })
   @ApiResponse({
@@ -46,6 +49,7 @@ export class CustomersController {
     return this.customersService.findOne(id);
   }
 
+  // Update a customer by ID
   @Patch(':id')
   @ApiOperation({ summary: 'Update a customer by ID' })
   @ApiResponse({

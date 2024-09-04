@@ -7,6 +7,7 @@ import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { CreateCustomerDto } from './dto/create-customer.dto';
 import { UpdateCustomerDto } from './dto/update-customer.dto';
 
+// Mock repository with stubbed methods
 const mockCustomerRepository = {
   create: jest.fn(),
   save: jest.fn(),
@@ -19,6 +20,7 @@ describe('CustomersService', () => {
   let service: CustomersService;
   let repository: Repository<Customer>;
 
+  // Setup before each test
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -34,10 +36,12 @@ describe('CustomersService', () => {
     repository = module.get<Repository<Customer>>(getRepositoryToken(Customer));
   });
 
+  // Clear mocks after each test
   afterEach(() => {
     jest.clearAllMocks();
   });
 
+  // Tests for the 'create' method
   describe('create', () => {
     it('should create and return a new customer', async () => {
       const createDto: UpdateCustomerDto = {
@@ -46,10 +50,9 @@ describe('CustomersService', () => {
         city: 'New York',
       };
 
-      const createdCustomer = {
-        ...createDto,
-      };
+      const createdCustomer = { ...createDto };
 
+      // Mock repository behavior
       mockCustomerRepository.create.mockReturnValue(createdCustomer);
       mockCustomerRepository.save.mockResolvedValue(createdCustomer);
 
@@ -73,6 +76,7 @@ describe('CustomersService', () => {
     });
   });
 
+  // Tests for the 'findAll' method
   describe('findAll', () => {
     it('should return all customers', async () => {
       const customers: CreateCustomerDto[] = [
@@ -88,6 +92,7 @@ describe('CustomersService', () => {
     });
   });
 
+  // Tests for the 'findOne' method
   describe('findOne', () => {
     it('should return a customer by ID', async () => {
       const customer: CreateCustomerDto = {
@@ -112,6 +117,7 @@ describe('CustomersService', () => {
     });
   });
 
+  // Tests for the 'update' method
   describe('update', () => {
     it('should update and return the updated customer', async () => {
       const updateDto: Partial<UpdateCustomerDto> = {
