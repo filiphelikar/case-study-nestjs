@@ -33,7 +33,7 @@ export class CustomersService {
       return newData;
     }
 
-    throw new BadRequestException();
+    throw new BadRequestException('Bad Request');
   }
 
   public findAll() {
@@ -45,7 +45,7 @@ export class CustomersService {
       (customer) => customer.id == id,
     );
 
-    if (!findCustomer) throw new NotFoundException();
+    if (!findCustomer) throw new NotFoundException('Customer not found');
 
     return findCustomer;
   }
@@ -56,7 +56,7 @@ export class CustomersService {
   ): CreateCustomerDto {
     const index: number = fakeData.findIndex((customer) => customer.id == id);
 
-    if (index == -1) throw new NotFoundException();
+    if (index == -1) throw new NotFoundException('Customer not found');
 
     fakeData[index] = {
       ...fakeData[index],
